@@ -20,6 +20,7 @@
 # include <fcntl.h> /* open() */
 # include <unistd.h> /* close() */
 # include <sys/mman.h> /* mmap() */
+# include <sys/stat.h> /* fstat() */
 
 #endif
 
