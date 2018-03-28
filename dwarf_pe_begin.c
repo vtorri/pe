@@ -8,6 +8,8 @@
  * [2] https://msdn.microsoft.com/en-us/library/ms809762.aspx
  */
 
+#include <stdlib.h> /* calloc() */
+
 #include "dwarf_pe.h"
 
 static int dwarf_pe_check(Dwarf_Pe *pe)
@@ -42,7 +44,7 @@ static int dwarf_pe_check(Dwarf_Pe *pe)
      * otherwise it is probably a 16 bits DOS module,
      * which we do not care.
      */
-    if (pe->map.size < nt_address + sizeof(IMAGE_NT_HEADERS)) {
+    if (pe->map.size < (long long)(nt_address + sizeof(IMAGE_NT_HEADERS))) {
         return 0;
     }
 

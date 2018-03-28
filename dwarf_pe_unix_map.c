@@ -20,7 +20,7 @@ int _dwarf_pe_map_set_from_fd(Dwarf_Pe_Map *map, int fd)
         return 0;
     }
 
-    map->fd = fd;
+    map->file = fd;
     map->size = buf.st_size;
     map->base = mmap(NULL, map->size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (map->base == MAP_FAILED) {
@@ -47,7 +47,7 @@ _dwarf_pe_map_set_from_file(Dwarf_Pe_Map *map, const char *filename)
         return 0;
     }
 
-    ret = pe_map_set_from_fd(map, fd);
+    ret = _dwarf_pe_map_set_from_fd(map, fd);
     map->from_fd = 0;
 
     return ret;
@@ -58,6 +58,6 @@ _dwarf_pe_map_unset(Dwarf_Pe_Map *map)
 {
     munmap(map->base, map->size);
     if (!map->from_fd) {
-        close(map->fd);
+        close(map->file);
     }
 }
