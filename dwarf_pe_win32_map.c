@@ -4,8 +4,8 @@
  * The file can be available from a filename or a file descriptor
  */
 
-#include "dwarf_pe_win32_private.h"
-#include "dwarf_pe_win32_map.h"
+#include "dwarf_pe_private.h"
+#include "dwarf_pe_map.h"
 
 static int dwarf_pe_map_set_from_handle(Dwarf_Pe_Map *map)
 {
