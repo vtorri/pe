@@ -13,7 +13,7 @@ static const char *
 pe_section_string_table_get(const Dwarf_Pe *pe)
 {
     if (!pe->nt_header->FileHeader.PointerToSymbolTable  ||
-        !pe->nt_header->FileHeader.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL)
+        pe->nt_header->FileHeader.PointerToSymbolTable + pe->nt_header->FileHeader.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL >= pe->map.size)
         return NULL;
 
     return (const char *)(pe->map.base + pe->nt_header->FileHeader.PointerToSymbolTable + pe->nt_header->FileHeader.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL);
