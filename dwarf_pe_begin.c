@@ -8,7 +8,7 @@
  * [2] https://msdn.microsoft.com/en-us/library/ms809762.aspx
  */
 
-#include "dwarf_pe_win32.h"
+#include "dwarf_pe.h"
 
 static int dwarf_pe_check(Dwarf_Pe *pe)
 {
@@ -81,6 +81,8 @@ Dwarf_Pe *_dwarf_pe_begin_from_fd(int fd)
     return pe;
 }
 
+#ifdef _WIN32
+
 Dwarf_Pe *_dwarf_pe_begin_from_file(LPCTSTR filename)
 {
     Dwarf_Pe *pe;
@@ -90,7 +92,11 @@ Dwarf_Pe *_dwarf_pe_begin_from_file(LPCTSTR filename)
         return NULL;
     }
 
-    _dwarf_pe_map_set_from_file(&pe->map, filename);
+    if (!_dwarf_pe_map_set_from_file(&pe->map, filename)) {
+        free(pe);
+
+        return NULL;
+    }
 
     if (!dwarf_pe_check(pe)) {
         _dwarf_pe_map_unset(&pe->map);
@@ -103,6 +109,37 @@ Dwarf_Pe *_dwarf_pe_begin_from_file(LPCTSTR filename)
 
     return pe;
 }
+
+#else
+
+Dwarf_Pe *_dwarf_pe_begin_from_file(const char *filename)
+{
+    Dwarf_Pe *pe;
+
+    pe = (Dwarf_Pe *)calloc(1, sizeof(Dwarf_Pe));
+    if (!pe) {
+        return NULL;
+    }
+
+    if (!_dwarf_pe_map_set_from_file(&pe->map, filename)) {
+        free(pe);
+
+        return NULL;
+    }
+
+    if (!dwarf_pe_check(pe)) {
+        _dwarf_pe_map_unset(&pe->map);
+        free(pe);
+
+        return NULL;
+    }
+
+    /* from now, we suppose that the file is a valid PE file */
+
+    return pe;
+}
+
+#endif
 
 void
 _dwarf_pe_end(Dwarf_Pe *pe)
