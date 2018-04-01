@@ -18,8 +18,8 @@ static int dwarf_pe_map_set_from_handle(Dwarf_Pe_Map *map)
 
     map->size = size.QuadPart;
     fm = CreateFileMapping(map->file,
-                            NULL, PAGE_READONLY,
-                            0, 0, NULL);
+                           NULL, PAGE_READONLY,
+                           0, 0, NULL);
     if (!fm) {
         return 0;
     }
