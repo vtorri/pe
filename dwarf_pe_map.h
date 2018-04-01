@@ -11,9 +11,9 @@ typedef HANDLE Dwarf_Fd;
 typedef int Dwarf_Fd;
 #endif
 
-typedef struct _Dwarf_Pe_Map_s Dwarf_Pe_Map;
+typedef struct Dwarf_Pe_Map_s Dwarf_Pe_Map;
 
-struct _Dwarf_Pe_Map_s
+struct Dwarf_Pe_Map_s
 {
     Dwarf_Fd file;
     unsigned char *base;

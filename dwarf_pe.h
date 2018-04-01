@@ -11,9 +11,9 @@
 extern "C" {
 #endif
 
-typedef struct _Dwarf_Pe_s Dwarf_Pe;
+typedef struct Dwarf_Pe_s Dwarf_Pe;
 
-struct _Dwarf_Pe_s
+struct Dwarf_Pe_s
 {
     Dwarf_Pe_Map map;
     IMAGE_NT_HEADERS *nt_header; /**< The NT header address */
