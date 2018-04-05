@@ -12,11 +12,11 @@ static char pe_section_name[9];
 static const char *
 pe_section_string_table_get(const Dwarf_Pe *pe)
 {
-    if (!pe->nt_header->FileHeader.PointerToSymbolTable  ||
-        pe->nt_header->FileHeader.PointerToSymbolTable + pe->nt_header->FileHeader.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL >= pe->map.size)
+    if (!pe->file_header->PointerToSymbolTable  ||
+        pe->file_header->PointerToSymbolTable + pe->file_header->NumberOfSymbols * IMAGE_SIZEOF_SYMBOL >= pe->map.size)
         return NULL;
 
-    return (const char *)(pe->map.base + pe->nt_header->FileHeader.PointerToSymbolTable + pe->nt_header->FileHeader.NumberOfSymbols * IMAGE_SIZEOF_SYMBOL);
+    return (const char *)(pe->map.base + pe->file_header->PointerToSymbolTable + pe->file_header->NumberOfSymbols * IMAGE_SIZEOF_SYMBOL);
 }
 
 static const char *
@@ -44,14 +44,16 @@ pe_section_name_get(const Dwarf_Pe *pe, const IMAGE_SECTION_HEADER *sh)
 # define FMT_LL16X "%016llx"
 #endif
 
+#if 1
+
 void
 pe_sections_display(Dwarf_Pe *pe)
 {
-    IMAGE_SECTION_HEADER *iter;
+    const IMAGE_SECTION_HEADER *iter;
     WORD i;
 
-    iter = IMAGE_FIRST_SECTION(pe->nt_header);
-    for (i = 0; i < pe->nt_header->FileHeader.NumberOfSections; i++, iter++)
+    iter = pe->first_section;
+    for (i = 0; i < (pe->sections_count - 1); i++, iter++)
     {
         printf("Section header #%u\n", i);
         printf("  field                type    value\n");
@@ -106,10 +108,12 @@ pe_sections_display(Dwarf_Pe *pe)
                (iter->Characteristics & IMAGE_SCN_MEM_EXECUTE) == IMAGE_SCN_MEM_EXECUTE,
                (iter->Characteristics & IMAGE_SCN_MEM_READ) == IMAGE_SCN_MEM_READ,
                (iter->Characteristics & IMAGE_SCN_MEM_WRITE) == IMAGE_SCN_MEM_WRITE);
-        if (i != (pe->nt_header->FileHeader.NumberOfSections - 1))
+        if (i != (pe->file_header->NumberOfSections - 1))
             printf("\n");
     }
 }
+
+#endif
 
 int main(int argc, char *argv[])
 {

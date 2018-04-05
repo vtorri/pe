@@ -16,7 +16,10 @@ typedef struct Dwarf_Pe_s Dwarf_Pe;
 struct Dwarf_Pe_s
 {
     Dwarf_Pe_Map map;
-    IMAGE_NT_HEADERS *nt_header; /**< The NT header address */
+    const IMAGE_FILE_HEADER *file_header;
+    const IMAGE_SECTION_HEADER *first_section;
+    int sections_count;
+    int is_64_bits : 1;
 };
 
 Dwarf_Pe *_dwarf_pe_begin_from_fd(int fd);

@@ -9,11 +9,14 @@
  */
 
 #include <stdlib.h> /* calloc() */
+#include <stdio.h> /* FIXME */
 
 #include "dwarf_pe.h"
 
 static int dwarf_pe_check(Dwarf_Pe *pe)
 {
+    IMAGE_NT_HEADERS *nt_header;
+    IMAGE_FILE_HEADER *file_header;
     DWORD nt_address;
 
     /*
@@ -35,27 +38,88 @@ static int dwarf_pe_check(Dwarf_Pe *pe)
     }
 
     /*
-     * The NT header is located at address 0x3c, see [1]
+     * The NT header is located at address 0x3c, see [1],
+     * so size must be at least 0x40.
      */
+    if (pe->map.size < 0x40) {
+        return 0;
+    }
+
     nt_address = *((DWORD *)(pe->map.base + 0x3c));
+    if (pe->map.size < nt_address) {
+        return 0;
+    }
+
+    nt_header = (IMAGE_NT_HEADERS *)(pe->map.base + nt_address);
 
     /*
+     * Description :
+     *
      * The file must contain the NT HEADER from that address, see [1],
-     * otherwise it is probably a 16 bits DOS module,
-     * which we do not care.
+     * otherwise it is probably a 16 bits DOS module, which we do not
+     * care. So the size must be at least, in addition to nt_address:
+     * - a DWORD (the NT signature)
+     * - an IMAGE_FILE_HEADER structure
+     * - an IMAGE_OPTIONAL_HEADER 32 or 64 which size is given by the
+     * SizeOfOptionalHeader field of IMAGE_FILE_HEADER
+     *
+     * Just after the NT header are the section eaders (see [1]).
      */
-    if (pe->map.size < (long long)(nt_address + sizeof(IMAGE_NT_HEADERS))) {
+
+    /*
+     * The NT header must begin with the "PE\0\0" string
+     * which is 0x00004550, called IMAGE_NT_SIGNATURE (see [1], [2]).
+     * The type of this signature is a DWORD.
+     */
+    if (pe->map.size < (nt_address + sizeof(DWORD))) {
         return 0;
     }
 
-    pe->nt_header = (IMAGE_NT_HEADERS *)(pe->map.base + nt_address);
-    /*
-     * The header must begin with the "PE\0\0" string
-     * which is 0x00004550, called IMAGE_NT_SIGNATURE (see [1], [2]).
-     */
-    if (pe->nt_header->Signature != IMAGE_NT_SIGNATURE) {
+    if (nt_header->Signature != IMAGE_NT_SIGNATURE) {
         return 0;
     }
+
+    /*
+    * The NT signature is followed by a an IMAGE_FILE_HEADER
+    */
+    if (pe->map.size < (nt_address +
+                        sizeof(DWORD) +
+                        sizeof(IMAGE_FILE_HEADER))) {
+        return 0;
+    }
+    file_header = (IMAGE_FILE_HEADER *)(pe->map.base + nt_address + sizeof(DWORD));
+
+    /*
+     * Get the architecture on wich the PE file has been created.
+     * Get it from the Machine field of file_header
+     */
+    if (file_header->Machine == IMAGE_FILE_MACHINE_I386) {
+        pe->is_64_bits = 0;
+    } else if ((file_header->Machine == IMAGE_FILE_MACHINE_IA64) ||
+               (file_header->Machine == IMAGE_FILE_MACHINE_AMD64)) {
+        pe->is_64_bits = 1;
+    } else {
+        return 0;
+    }
+
+    /*
+     * Get the number of sections (limited to 96, see [1])
+     */
+    if (file_header->NumberOfSections > 96) {
+        return 0;
+    }
+
+    pe->sections_count = file_header->NumberOfSections + 1;
+
+    /*
+     * The section headers are just after the NT header
+     */
+    pe->first_section = (const IMAGE_SECTION_HEADER *)
+        (pe->map.base +
+         nt_address +
+         sizeof(DWORD) +
+         sizeof(IMAGE_FILE_HEADER) +
+         file_header->SizeOfOptionalHeader);
 
     return 1;
 }
